@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Applications forecast</title>
+
+<style>
+:root{
+  --brand:#00aff0;
+  --navy:#0f1d66;
+}
+html,body{margin:0;padding:0;font-family:Arial,Helvetica,sans-serif;background:#fff;color:var(--navy);}
+.grid{display:flex;gap:3rem;max-width:1200px;margin:0 auto;padding:3rem 1rem;}
+main{flex:3;}
+aside{flex:1;display:flex;align-items:center;}
+h1{font-size:3.5rem;font-weight:700;line-height:1.15;margin:0 0 1rem;}
+h1 .coloured{color:var(--brand);}
+p.lead{font-size:1.15rem;margin:0 0 2.5rem;}
+input[type=text],select{
+  border:2px solid var(--brand);
+  border-radius:30px;
+  padding:1rem 1.5rem;
+  font-size:1.1rem;
+  width:45ch;
+  box-sizing:border-box;
+  margin:0 0 1.5rem;
+}
+select{width:50ch;}
+#result{font-size:1.25rem;font-weight:600;margin-top:1.5rem;}
+img{width:100%;height:auto;}
+</style>
+</head>
+<body>
+
+<div class="grid">
+  <main>
+    <h1>Discover <span class="coloured">how many applications</span><br>you could receive with us</h1>
+    <p class="lead">Simply enter a job title and location to estimate the number of candidates likely to apply before you post on eFinancialCareers.</p>
+
+    <input id="role" type="text" placeholder="What role are you hiring for" list="jobs">
+    <datalist id="jobs"></datalist>
+
+    <select id="location">
+      <option value="" disabled selected>Select location</option>
+    </select>
+
+    <p id="result"></p>
+  </main>
+
+  <aside>
+    <img src="https://i.ibb.co/QFLTq3Fm/efc.png" alt="eFinancialCareers logo">
+  </aside>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+<script>
+const csvUrl='https://docs.google.com/spreadsheets/d/e/2PACX-1vTXMMPUO1a6egT3JmCgKuE6Lfo6GW2gl6F1pnxcoHFj4tQ8komKW7g8HQ_zu6O039HOiMWo3lv8-Mkc/pub?output=csv';
+const presetLocations=['Singapore','DACH','USA','Frenelux','Australia','Hong Kong SAR','UK','Middle East'];
+
+const roleInput=document.getElementById('role');
+const jobsList=document.getElementById('jobs');
+const locSelect=document.getElementById('location');
+const result=document.getElementById('result');
+
+presetLocations.forEach(l=>{
+  const opt=document.createElement('option');
+  opt.value=l;
+  opt.textContent=l;
+  locSelect.appendChild(opt);
+});
+
+function show(msg){result.textContent=msg;}
+
+function runFilter(data){
+  const title=roleInput.value.trim();
+  const country=locSelect.value;
+  if(!title||!country){show('');return;}
+  const row=data.find(d=>d.title===title&&d.country===country);
+  if(row){show(`In the first 30 days, expect ${row.apps} applications`);}else{show('No forecast available for that role and location');}}
+
+Papa.parse(csvUrl,{download:true,skipEmptyLines:true,complete:res=>{
+  const rows=res.data.filter(r=>r.length>=3);
+  const data=rows.map(r=>({title:r[0],country:r[1],apps:+r[2]}));
+  const titles=[...new Set(data.map(d=>d.title))].sort();
+  titles.forEach(t=>{const opt=document.createElement('option');opt.value=t;jobsList.appendChild(opt);});
+  roleInput.addEventListener('input',()=>runFilter(data));
+  locSelect.addEventListener('change',()=>runFilter(data));
+}});
+</script>
+</body>
+</html>
