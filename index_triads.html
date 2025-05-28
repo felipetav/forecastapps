@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Applications forecast</title>
+<style>
+:root{--brand:#00aff0;--navy:#0f1d66;}
+html,body{margin:0;padding:0;font-family:Arial,Helvetica,sans-serif;background:#fff;color:var(--navy);} 
+.grid{display:flex;gap:3rem;max-width:1200px;margin:0 auto;padding:3rem 1rem;}
+main{flex:3;}
+aside{flex:1;display:flex;align-items:center;}
+/* slightly smaller heading */
+h1{font-size:3.2rem;font-weight:700;line-height:1.15;margin:0 0 1rem;}
+.coloured{color:var(--brand);} 
+
+p.lead{font-size:1.15rem;margin:0 0 2.5rem;}
+
+/* equal, larger sizing for controls */
+input[type=text]{
+  border:2px solid var(--brand);
+  border-radius:30px;
+  padding:1rem 1.5rem;
+  font-size:1.1rem;
+  width:55ch;
+  box-sizing:border-box;
+  margin:0 0 1.5rem;
+}
+/* suggestion dropdown shared */
+.suggestions{
+  position:absolute;
+  top:100%;
+  left:0;
+  right:0;
+  background:#fff;
+  border:2px solid var(--brand);
+  border-top:none;
+  border-radius:0 0 20px 20px;
+  max-height:260px;
+  overflow-y:auto;
+  list-style:none;
+  margin:0;
+  padding:0;
+  z-index:10;
+  display:none;
+}
+.suggestions li{padding:0.75rem 1.25rem;cursor:pointer;}
+.suggestions li:hover{background:#f0faff;}
+
+#result{font-size:1.25rem;font-weight:600;margin-top:1.5rem;}
+img{width:100%;height:auto;}
+</style>
+</head>
+<body>
+<div class="grid">
+  <main>
+    <h1>Discover <span class="coloured">how many applications</span><br>you could receive with us</h1>
+    <p class="lead">Simply enter a job title and location to estimate the number of candidates likely to apply before you post on eFinancialCareers.</p>
+
+        <div style="position:relative;max-width:55ch;">
+      <input id="role" type="text" placeholder="What role are you hiring for">
+      <ul id="jobSuggestions" class="suggestions"></ul>
+    </div>
+
+        <div style="position:relative;max-width:55ch;">
+      <input id="location" type="text" placeholder="Select location" disabled>
+      <ul id="locSuggestions" class="suggestions"></ul>
+    </div>
+
+    <p id="result"></p>
+  </main>
+
+  <aside>
+    <img src="https://felipetav.github.io/forecastapps/efc.png" alt="eFinancialCareers logo">
+  </aside>
+</div>
+
+<script>
+// IMPORTANT: Replace YOUR_GID_NUMBER with the actual GID for your 'pairs' tab
+const csvUrl='https://docs.google.com/spreadsheets/d/e/2PACX-1vTXMMPUO1a6egT3JmCgKuE6Lfo6GW2gl6F1pnxcoHFj4tQ8komKW7g8HQ_zu6O039HOiMWo3lv8-Mkc/pub?output=csv&gid=1231885808';
+
+// DOM references
+const roleInput=document.getElementById('role');
+const jobList=document.getElementById('jobSuggestions');
+const locInput=document.getElementById('location');
+const locList=document.getElementById('locSuggestions');
+const result=document.getElementById('result');
+
+// helpers
+const clear=(el)=>{while(el.firstChild)el.removeChild(el.firstChild);};
+const csvToArray=(t)=>t.trim().split(/\r?\n/).map(l=>l.split(','));
+const show=(list)=>list.style.display='block';
+const hide=(list)=>list.style.display='none';
+
+document.addEventListener('click',e=>{
+  if(!jobList.contains(e.target)&&e.target!==roleInput)hide(jobList);
+  if(!locList.contains(e.target)&&e.target!==locInput)hide(locList);
+});
+
+fetch(csvUrl)
+  .then(r=>r.text())
+  .then(txt=>{
+    const rows=csvToArray(txt).slice(1).filter(r=>r.length>=4);
+    const data=rows.map(r=>({title:r[0],country:r[1],apps:+r[2],similar:+r[3]}));
+    const titles=[...new Set(data.map(d=>d.title))].sort();
+
+    /* JOB TITLE AUTOCOMPLETE */
+    function populateJobSuggestions(q){
+      clear(jobList);
+      const query=q.trim().toLowerCase();
+      if(query.length<3){hide(jobList);return;}
+      const matches=titles.filter(t=>t.toLowerCase().includes(query)).slice(0,30);
+      if(!matches.length){hide(jobList);return;}
+      matches.forEach(m=>{
+        const li=document.createElement('li');
+        li.textContent=m;
+        li.onclick=()=>{roleInput.value=m;hide(jobList);setupLocations();filter();};
+        jobList.appendChild(li);
+      });
+      show(jobList);
+    }
+
+    /* LOCATION AUTOCOMPLETE */
+    let currentLocs=[];
+    function populateLocSuggestions(q=''){
+      clear(locList);
+      const query=q.trim().toLowerCase();
+      const matches=(query?currentLocs.filter(l=>l.toLowerCase().includes(query)):currentLocs);
+      if(!matches.length){hide(locList);return;}
+      matches.forEach(l=>{
+        const li=document.createElement('li');
+        li.textContent=l;
+        li.onclick=()=>{locInput.value=l;hide(locList);filter();};
+        locList.appendChild(li);
+      });
+      show(locList);
+    }
+
+    /* enable / refresh location list when title chosen */
+    function setupLocations(){
+      const title=roleInput.value.trim();
+      locInput.value='';
+      if(!titles.includes(title)){
+        locInput.disabled=true;currentLocs=[];hide(locList);return;
+      }
+      currentLocs=[...new Set(data.filter(d=>d.title===title).map(d=>d.country))].sort();
+      locInput.disabled=false;
+    }
+
+    /* MAIN FILTER FOR RESULT */
+    function filter(){
+      const title=roleInput.value.trim();
+      const country=locInput.value.trim();
+      if(!title||!country){result.textContent='';return;}
+      const row=data.find(d=>d.title===title&&d.country===country);
+      if(row){
+        result.innerHTML=`In this first 30 days, expect <span class="coloured">${row.apps}</span> applications, based on data from ${row.similar} similar jobs`;
+      }else{result.textContent='No forecast available for that role and location';}
+    }
+
+    // EVENTS
+    roleInput.oninput=(e)=>{populateJobSuggestions(e.target.value);setupLocations();filter();};
+    locInput.onfocus=()=>populateLocSuggestions();
+    locInput.oninput=(e)=>populateLocSuggestions(e.target.value);
+  })
+  .catch(e=>{console.error(e);result.textContent='Unable to load data';});
+</script>
+</body>
+</html>
