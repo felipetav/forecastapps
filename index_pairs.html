@@ -2,39 +2,90 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Applications forecast</title>
+<meta name="viewport" content="width=device-width, initial-scale=1"> <title>Applications forecast</title>
 <style>
 :root{--brand:#00aff0;--navy:#0f1d66;}
-html,body{margin:0;padding:0;font-family:Arial,Helvetica,sans-serif;background:#fff;color:var(--navy);}
-.grid{display:flex;gap:3rem;max-width:1200px;margin:0 auto;padding:3rem 1rem;}
-main{flex:3;}
-aside{flex:1;display:flex;align-items:center;}
-/* slightly smaller heading */
-h1{font-size:3.2rem;font-weight:700;line-height:1.15;margin:0 0 1rem;}
+html,body{margin:0;padding:0;font-family:Arial,Helvetica,sans-serif;background:#fff;color:var(--navy); line-height: 1.6;} /* Added line-height */
+
+.grid{
+  display:flex;
+  gap:2rem; /* Slightly reduced gap */
+  max-width:1200px;
+  margin:0 auto;
+  padding:2rem 1rem; /* Adjusted padding */
+}
+
+main{
+  flex:3;
+  min-width: 0; /* Prevent flex item overflow */
+}
+
+aside{
+  flex:1;
+  display:flex;
+  align-items:center;
+  justify-content:center; /* Center image horizontally */
+  min-width: 0; /* Prevent flex item overflow */
+  padding-top: 1rem; /* Add some space if image is tall */
+}
+
+/* Image styling */
+aside img{
+  max-width:100%;
+  max-height:280px; /* Control max height of the image */
+  width:auto;
+  height:auto;
+  object-fit:contain; /* Scale image to fit without cropping */
+}
+
+h1{
+  font-size:2.8rem; /* Slightly reduced for balance */
+  font-weight:700;
+  line-height:1.2; /* Adjusted line-height */
+  margin:0 0 1rem;
+}
 .coloured{color:var(--brand);}
 
-p.lead{font-size:1.15rem;margin:0 0 2.5rem;}
+p.lead{font-size:1.1rem;margin:0 0 2rem;} /* Slightly reduced size and margin */
 
-/* equal, larger sizing for controls */
+/* Input field styling */
+.input-wrapper { /* Wrapper for positioning suggestions */
+  position:relative;
+  max-width:55ch;
+  margin-bottom: 1.5rem;
+}
+
 input[type=text]{
   border:2px solid var(--brand);
   border-radius:30px;
-  padding:1rem 1.5rem;
-  font-size:1.1rem;
-  width:55ch;
+  padding:0.9rem 1.4rem; /* Slightly adjusted padding */
+  font-size:1rem; /* Slightly reduced font size */
+  width:100%; /* Make input take full width of its wrapper */
   box-sizing:border-box;
-  margin:0 0 1.5rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  transition: box-shadow 0.3s ease, border-color 0.3s ease;
 }
-/* suggestion dropdown shared */
+
+input[type=text]:focus{
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  border-color: #007bff; /* Darker shade of brand for focus */
+  outline:none;
+}
+
+input[type=text]::placeholder {
+    color: #aaa; /* Lighter placeholder text */
+}
+
+/* Suggestion dropdown shared */
 .suggestions{
   position:absolute;
-  top:100%;
+  top:calc(100% + 4px); /* Position below input with a small gap */
   left:0;
   right:0;
   background:#fff;
-  border:2px solid var(--brand);
+  border:1px solid #ddd; /* Lighter border */
   border-top:none;
-  border-radius:0 0 20px 20px;
+  border-radius:0 0 15px 15px; /* Softer radius */
   max-height:260px;
   overflow-y:auto;
   list-style:none;
@@ -42,40 +93,89 @@ input[type=text]{
   padding:0;
   z-index:10;
   display:none;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
-.suggestions li{padding:0.75rem 1.25rem;cursor:pointer;}
+.suggestions li{
+  padding:0.85rem 1.25rem; /* Adjusted padding */
+  cursor:pointer;
+  font-size: 0.95rem;
+  transition: background-color 0.2s ease;
+}
 .suggestions li:hover{background:#f0faff;}
+.suggestions li:not(:last-child) {
+    border-bottom: 1px solid #eee; /* Separator for items */
+}
 
-#result{font-size:1.25rem;font-weight:600;margin-top:1.5rem;}
-img{width:100%;height:auto;}
+#result{
+  font-size:1.15rem; /* Adjusted size */
+  font-weight:600;
+  margin-top:1rem; /* Reduced margin */
+  padding: 0.75rem;
+  background-color: #f9f9f9;
+  border-left: 4px solid var(--brand);
+  border-radius: 4px;
+}
+#result .coloured {
+    font-size: 1.3em; /* Make the number stand out more */
+}
+
+/* Responsive adjustments */
+@media (max-width: 900px) { /* Adjusted breakpoint */
+  .grid{
+    flex-direction: column;
+    align-items:stretch; /* Stretch items for full width */
+    padding: 1.5rem 1rem;
+  }
+  main, aside {
+    flex-basis: auto;
+    width: 100%;
+  }
+  aside {
+    order:1; /* Image at the top on mobile */
+    margin-bottom: 1.5rem; /* Space below image */
+    padding-top: 0;
+  }
+  aside img {
+      max-height: 200px; /* Further reduce image height on smaller screens */
+  }
+  main {
+    order:2;
+  }
+  h1{font-size:2.2rem;}
+  .input-wrapper {
+      max-width: none; /* Allow full width */
+  }
+}
+
+@media (max-width: 480px) {
+    h1 { font-size: 1.9rem; }
+    p.lead { font-size: 1rem; }
+    input[type=text] { padding: 0.8rem 1.2rem; font-size: 0.95rem;}
+    .suggestions li { padding: 0.75rem 1rem; font-size: 0.9rem;}
+    #result { font-size: 1.05rem; }
+}
+
 </style>
 </head>
 <body>
 <div class="grid">
+  <aside> <img src="https://felipetav.github.io/forecastapps/efc.png" alt="eFinancialCareers visual concept"> </aside>
   <main>
     <h1>Discover <span class="coloured">how many applications</span><br>you could receive with us</h1>
     <p class="lead">Simply enter a job title and location to estimate the number of candidates likely to apply before you post on eFinancialCareers.</p>
 
-    <div style="position:relative;max-width:55ch;">
-      <input id="role" type="text" placeholder="What role are you hiring for">
-      <ul id="jobSuggestions" class="suggestions"></ul>
+    <div class="input-wrapper"> <input id="role" type="text" placeholder="What role are you hiring for? (e.g., Analyst)"> <ul id="jobSuggestions" class="suggestions"></ul>
     </div>
 
-    <div style="position:relative;max-width:55ch;">
-      <input id="location" type="text" placeholder="Select location" disabled>
+    <div class="input-wrapper"> <input id="location" type="text" placeholder="Select location" disabled>
       <ul id="locSuggestions" class="suggestions"></ul>
     </div>
 
     <p id="result"></p>
   </main>
-
-  <aside>
-    <img src="https://felipetav.github.io/forecastapps/efc.png" alt="eFinancialCareers logo">
-  </aside>
 </div>
 
 <script>
-// MODIFIED LINE: Updated csvUrl to point to the 'pairs' tab with gid=549476474
 const csvUrl='https://docs.google.com/spreadsheets/d/e/2PACX-1vTXMMPUO1a6egT3JmCgKuE6Lfo6GW2gl6F1pnxcoHFj4tQ8komKW7g8HQ_zu6O039HOiMWo3lv8-Mkc/pub?gid=549476474&output=csv';
 
 // DOM references
@@ -91,41 +191,69 @@ const csvToArray=(t)=>t.trim().split(/\r?\n/).map(l=>l.split(','));
 const show=(list)=>list.style.display='block';
 const hide=(list)=>list.style.display='none';
 
+// Debounce function to limit API calls or frequent updates
+function debounce(func, delay) {
+    let timeout;
+    return function(...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), delay);
+    };
+}
+
 document.addEventListener('click',e=>{
-  if(!jobList.contains(e.target)&&e.target!==roleInput)hide(jobList);
-  if(!locList.contains(e.target)&&e.target!==locInput)hide(locList);
+  if(jobList.style.display === 'block' && !jobList.contains(e.target) && e.target !== roleInput) hide(jobList);
+  if(locList.style.display === 'block' && !locList.contains(e.target) && e.target !== locInput) hide(locList);
 });
 
 fetch(csvUrl)
-  .then(r=>r.text())
+  .then(r => {
+    if (!r.ok) { throw new Error(`Network response was not ok: ${r.statusText}`); }
+    return r.text();
+  })
   .then(txt=>{
-    const rows=csvToArray(txt).slice(1).filter(r=>r.length>=4); // Assuming the new tab also has a header row and at least 4 columns
-    const data=rows.map(r=>({title:r[0],country:r[1],apps:+r[2],similar:+r[3]})); // Assuming column order (title, country, apps, similar) is the same
+    const rows=csvToArray(txt).slice(1).filter(r=>r.length>=4 && r[0].trim() !== ""); // Ensure title is not empty
+    const data=rows.map(r=>({title:r[0].trim(),country:r[1].trim(),apps:+r[2],similar:+r[3]}));
     const titles=[...new Set(data.map(d=>d.title))].sort();
 
-    /* JOB TITLE AUTOCOMPLETE */
     function populateJobSuggestions(q){
       clear(jobList);
       const query=q.trim().toLowerCase();
-      if(query.length<3){hide(jobList);return;}
-      const matches=titles.filter(t=>t.toLowerCase().includes(query)).slice(0,30);
+      if(query.length<2){hide(jobList); return;} // Reduced min length for suggestions
+
+      const matches=titles.filter(t=>t.toLowerCase().includes(query)).slice(0,10); // Show fewer initial suggestions
       if(!matches.length){hide(jobList);return;}
       matches.forEach(m=>{
         const li=document.createElement('li');
         li.textContent=m;
-        li.onclick=()=>{roleInput.value=m;hide(jobList);setupLocations();filter();};
+        li.onclick=()=>{
+            roleInput.value=m;
+            hide(jobList);
+            setupLocations();
+            filter();
+            locInput.focus(); // Auto-focus location input
+        };
         jobList.appendChild(li);
       });
       show(jobList);
     }
 
-    /* LOCATION AUTOCOMPLETE */
     let currentLocs=[];
     function populateLocSuggestions(q=''){
       clear(locList);
       const query=q.trim().toLowerCase();
-      const matches=(query?currentLocs.filter(l=>l.toLowerCase().includes(query)):currentLocs);
+      const matches=(query ? currentLocs.filter(l=>l.toLowerCase().includes(query)) : currentLocs).slice(0,10); // Show fewer
+
+      if(!matches.length && query.length > 0 && currentLocs.length > 0){ // Handle no matches found
+          const li=document.createElement('li');
+          li.textContent = "No matching locations";
+          li.style.pointerEvents = "none"; // Make it non-clickable
+          li.style.color = "#888";
+          locList.appendChild(li);
+          show(locList);
+          return;
+      }
       if(!matches.length){hide(locList);return;}
+
       matches.forEach(l=>{
         const li=document.createElement('li');
         li.textContent=l;
@@ -135,34 +263,46 @@ fetch(csvUrl)
       show(locList);
     }
 
-    /* enable / refresh location list when title chosen */
     function setupLocations(){
       const title=roleInput.value.trim();
-      locInput.value='';
+      locInput.value=''; result.innerHTML = ''; // Clear previous result
       if(!titles.includes(title)){
         locInput.disabled=true;currentLocs=[];hide(locList);return;
       }
       currentLocs=[...new Set(data.filter(d=>d.title===title).map(d=>d.country))].sort();
       locInput.disabled=false;
+      if(currentLocs.length === 1){ // If only one location, auto-select it
+          locInput.value = currentLocs[0];
+          populateLocSuggestions(); // To technically hide the list if it was shown
+          hide(locList);
+          filter();
+      } else {
+          populateLocSuggestions(); // Populate for user to choose
+      }
     }
 
-    /* MAIN FILTER FOR RESULT */
     function filter(){
       const title=roleInput.value.trim();
       const country=locInput.value.trim();
-      if(!title||!country){result.textContent='';return;}
+      if(!title||!country){result.innerHTML='';return;}
       const row=data.find(d=>d.title===title&&d.country===country);
       if(row){
-        result.innerHTML=`In this first 30 days, expect <span class="coloured">${row.apps}</span> applications, based on data from ${row.similar} similar jobs`;
-      }else{result.textContent='No forecast available for that role and location';}
+        result.innerHTML=`Expect <span class="coloured">${row.apps}</span> applications in the first 30 days, based on ${row.similar} similar job postings.`;
+      }else{result.innerHTML='No forecast available for this specific role and location combination.';}
     }
 
-    // EVENTS
-    roleInput.oninput=(e)=>{populateJobSuggestions(e.target.value);setupLocations();filter();};
-    locInput.onfocus=()=>populateLocSuggestions();
-    locInput.oninput=(e)=>populateLocSuggestions(e.target.value);
+    // Use debounce for input events that trigger suggestions
+    roleInput.oninput=debounce(e=>{populateJobSuggestions(e.target.value);setupLocations();/*filter();*/}, 300); // Debounced, removed immediate filter
+    roleInput.onfocus=()=>populateJobSuggestions(roleInput.value); // Show suggestions on focus too if text exists
+
+    locInput.onfocus=()=>populateLocSuggestions(locInput.value); // Changed to populate with current value
+    locInput.oninput=debounce(e=>populateLocSuggestions(e.target.value), 300); // Debounced
   })
-  .catch(e=>{console.error(e);result.textContent='Unable to load data';});
+  .catch(e=>{
+      console.error("Error fetching or processing CSV data:", e);
+      result.textContent='Unable to load forecast data at this time. Please try again later.';
+      result.style.color = 'red';
+  });
 </script>
 </body>
 </html>
